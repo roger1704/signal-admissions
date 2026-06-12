@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap"
     rel="stylesheet" />
 
   <style>
@@ -2602,6 +2602,292 @@
     })();
   </script>
   <!-- === /PREMIUM POLISH JS ====================================== -->
+
+  <!-- ============================================================= -->
+  <!-- === TRACK A · BRAND ELEVATION — the Field & the Instrument == -->
+  <!-- === additive — safe to remove this entire block ============= -->
+  <!-- ============================================================= -->
+  <style id="track-a-style">
+    :root { --gold: #c9a96e; --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace; }
+
+    /* fixed atmosphere + instrument canvases */
+    #field-canvas,
+    #signal-thread { position: fixed; pointer-events: none; }
+    #field-canvas { inset: 0; width: 100%; height: 100%; z-index: 1; }
+    #signal-thread { top: 0; right: 20px; width: 28px; height: 100vh; z-index: 2; }
+    @media (max-width: 900px) { #signal-thread { display: none; } }
+
+    /* Instrument — mono index on section labels */
+    .sec-idx {
+      order: -1;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      color: var(--fg-dimmer);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Instrument — calibration ticks at divider endpoints */
+    .section-divider { position: relative; overflow: visible; }
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      width: 1px;
+      height: 5px;
+      background: var(--border-2);
+    }
+    .section-divider::before { left: 0; }
+    .section-divider::after { right: 0; }
+
+    /* Instrument — pillar signal traces */
+    .pillar-spark {
+      display: block;
+      width: 78px;
+      height: 26px;
+      margin-top: 1.7rem;
+      opacity: 0.55;
+      transition: opacity 0.6s var(--ease-out-quart);
+    }
+    .engines-col:hover .pillar-spark { opacity: 1; }
+
+    /* Instrument — footer status readout */
+    .footer-status {
+      font-family: var(--mono);
+      font-size: 0.56rem;
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--fg-dimmer);
+      text-align: center;
+      margin-top: 1.6rem;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+  <script>
+    (function trackABrandElevation() {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var coarse = window.matchMedia('(pointer: coarse)').matches;
+      var GOLD = '#c9a96e';
+      var GRAY = '#6f6f6f';
+      var DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+      function pad2(n) { return (n < 10 ? '0' : '') + n; }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+      function hx(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+      var G_RGB = hx(GOLD), Y_RGB = hx(GRAY);
+      function mix(t) {
+        return 'rgb(' + Math.round(lerp(Y_RGB[0], G_RGB[0], t)) + ',' +
+          Math.round(lerp(Y_RGB[1], G_RGB[1], t)) + ',' +
+          Math.round(lerp(Y_RGB[2], G_RGB[2], t)) + ')';
+      }
+
+      /* ---- Instrument: number the section labels ---- */
+      try {
+        var labels = document.querySelectorAll('.section-label');
+        Array.prototype.forEach.call(labels, function (lab, i) {
+          var idx = document.createElement('span');
+          idx.className = 'sec-idx';
+          idx.setAttribute('aria-hidden', 'true');
+          idx.textContent = pad2(i + 1);
+          lab.insertBefore(idx, lab.firstChild);
+        });
+      } catch (e) {}
+
+      /* ---- Instrument: footer status readout ---- */
+      try {
+        var foot = document.querySelector('footer .container');
+        if (foot) {
+          var st = document.createElement('div');
+          st.className = 'footer-status';
+          st.textContent = 'SIGNAL ADMISSIONS · EST. 2026 · BY APPLICATION';
+          foot.appendChild(st);
+        }
+      } catch (e) {}
+
+      /* ---- Instrument: pillar signal traces ---- */
+      try {
+        var cols = document.querySelectorAll('.engines-col');
+        // 0 Digital Authority: smooth long wave · 1 Intake Intelligence: tight responsive · 2 Referral Authority: stepped build
+        Array.prototype.forEach.call(cols, function (col, i) {
+          var cv = document.createElement('canvas');
+          cv.className = 'pillar-spark';
+          cv.setAttribute('aria-hidden', 'true');
+          col.appendChild(cv);
+          var w = 78, h = 26;
+          cv.width = w * DPR; cv.height = h * DPR;
+          var c = cv.getContext('2d');
+          c.scale(DPR, DPR);
+          function draw(color) {
+            c.clearRect(0, 0, w, h);
+            c.strokeStyle = color;
+            c.lineWidth = 1;
+            c.lineJoin = 'round';
+            c.beginPath();
+            var mid = h / 2, pad = 2;
+            for (var x = pad; x <= w - pad; x++) {
+              var p = (x - pad) / (w - pad * 2), y;
+              if (i === 0) {
+                // smooth long wave
+                y = mid + Math.sin(p * Math.PI * 2.2) * (h * 0.30);
+              } else if (i === 1) {
+                // tight responsive wave
+                y = mid + Math.sin(p * Math.PI * 7.5) * (h * 0.26) * (0.5 + 0.5 * Math.sin(p * Math.PI * 1.5));
+              } else {
+                // stepped build
+                var steps = 5, s = Math.floor(p * steps);
+                y = (h - pad) - (s / (steps - 1)) * (h - pad * 2);
+              }
+              if (x === pad) c.moveTo(x, y); else c.lineTo(x, y);
+            }
+            c.stroke();
+          }
+          draw(GRAY);
+          if (!coarse) {
+            col.addEventListener('mouseenter', function () { draw(GOLD); });
+            col.addEventListener('mouseleave', function () { draw(GRAY); });
+          }
+        });
+      } catch (e) {}
+
+      /* ---- The Field: ambient particle atmosphere ---- */
+      if (!reduce && !coarse) {
+        (function field() {
+          var cv = document.createElement('canvas');
+          cv.id = 'field-canvas';
+          cv.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(cv);
+          var c = cv.getContext('2d');
+          var W, H, parts = [], mx = -9999, my = -9999, raf = null, running = true;
+
+          function size() {
+            W = cv.width = Math.floor(window.innerWidth * DPR);
+            H = cv.height = Math.floor(window.innerHeight * DPR);
+            cv.style.width = window.innerWidth + 'px';
+            cv.style.height = window.innerHeight + 'px';
+            var target = Math.min(64, Math.round((window.innerWidth * window.innerHeight) / 26000));
+            parts = [];
+            for (var i = 0; i < target; i++) {
+              parts.push({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                vx: (Math.random() - 0.5) * 0.10 * DPR,
+                vy: (Math.random() - 0.5) * 0.10 * DPR,
+                r: (0.5 + Math.random() * 0.8) * DPR,
+                a: 0.02 + Math.random() * 0.03,
+                g: Math.random() < 0.18
+              });
+            }
+          }
+          function step() {
+            if (!running) return;
+            c.clearRect(0, 0, W, H);
+            for (var i = 0; i < parts.length; i++) {
+              var p = parts[i];
+              p.x += p.vx; p.y += p.vy;
+              if (mx > -9000) {
+                var dx = p.x - mx * DPR, dy = p.y - my * DPR, d2 = dx * dx + dy * dy, R = 120 * DPR;
+                if (d2 < R * R) {
+                  var d = Math.sqrt(d2) || 1, f = (1 - d / R) * 0.6;
+                  p.x += (dx / d) * f; p.y += (dy / d) * f;
+                }
+              }
+              if (p.x < 0) p.x += W; else if (p.x > W) p.x -= W;
+              if (p.y < 0) p.y += H; else if (p.y > H) p.y -= H;
+              c.beginPath();
+              c.arc(p.x, p.y, p.r, 0, 6.2832);
+              c.fillStyle = (p.g ? 'rgba(201,169,110,' : 'rgba(240,237,232,') + p.a + ')';
+              c.fill();
+            }
+            raf = requestAnimationFrame(step);
+          }
+          window.addEventListener('mousemove', function (e) { mx = e.clientX; my = e.clientY; }, { passive: true });
+          window.addEventListener('mouseout', function () { mx = -9999; my = -9999; }, { passive: true });
+          window.addEventListener('resize', size, { passive: true });
+          if (window.ResizeObserver) { try { new ResizeObserver(size).observe(document.documentElement); } catch (e) {} }
+          document.addEventListener('visibilitychange', function () {
+            running = !document.hidden;
+            if (running && !raf) { raf = requestAnimationFrame(step); }
+            else if (!running && raf) { cancelAnimationFrame(raf); raf = null; }
+          });
+          size(); step();
+        })();
+      }
+
+      /* ---- The signal thread: scattered noise resolving to one gold line ---- */
+      (function thread() {
+        // Always build it; CSS hides it under 900px. Never permanently bail on a
+        // transient narrow first-render (load, zoom, or a preview harness sliver).
+        var cv = document.createElement('canvas');
+        cv.id = 'signal-thread';
+        cv.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(cv);
+        var c = cv.getContext('2d');
+        var W, H, segs = [], cur = 0, target = 0, raf = null;
+
+        function size() {
+          W = cv.width = Math.floor(28 * DPR);
+          H = cv.height = Math.floor(window.innerHeight * DPR);
+          cv.style.width = '28px';
+          cv.style.height = window.innerHeight + 'px';
+          var n = Math.max(18, Math.round(window.innerHeight / 15));
+          segs = [];
+          for (var i = 0; i < n; i++) {
+            segs.push({ off: (Math.random() * 2 - 1), seed: Math.random() });
+          }
+        }
+        function progress() {
+          var h = document.documentElement;
+          var max = h.scrollHeight - h.clientHeight;
+          var sy = h.scrollTop || window.pageYOffset || 0;
+          return max > 0 ? clamp(sy / max, 0, 1) : 0;
+        }
+        function render(res) {
+          c.clearRect(0, 0, W, H);
+          var cx = W / 2, maxJit = 11 * DPR, n = segs.length, gap = H / n;
+          // ease the resolve so the bottom resolves first (toward Request Access)
+          for (var i = 0; i < n; i++) {
+            var s = segs[i];
+            var yMid = (i + 0.5) * gap;
+            // segments near the bottom resolve earlier
+            var local = clamp(res * 1.35 - (1 - (i / n)) * 0.35, 0, 1);
+            var jit = s.off * maxJit * (1 - local);
+            var x = cx + jit;
+            var len = lerp(gap * 0.42, gap * 0.94, local); // grows toward continuous
+            var a = lerp(0.12, 0.85, local);
+            c.strokeStyle = 'rgba(' + Math.round(lerp(111, 201, local)) + ',' +
+              Math.round(lerp(111, 169, local)) + ',' +
+              Math.round(lerp(111, 110, local)) + ',' + a + ')';
+            c.lineWidth = lerp(1, 1.4, local) * DPR;
+            c.beginPath();
+            c.moveTo(x, yMid - len / 2);
+            c.lineTo(x, yMid + len / 2);
+            c.stroke();
+          }
+        }
+        function tick() {
+          cur += (target - cur) * 0.12;
+          render(cur);
+          if (Math.abs(target - cur) > 0.002) { raf = requestAnimationFrame(tick); }
+          else { cur = target; render(cur); raf = null; }
+        }
+        function onScroll() {
+          target = progress();
+          if (reduce) { cur = target; render(cur); return; }
+          if (!raf) raf = requestAnimationFrame(tick);
+        }
+        function recompute() { size(); target = progress(); cur = target; render(cur); }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', recompute, { passive: true });
+        if (window.ResizeObserver) { try { new ResizeObserver(recompute).observe(document.documentElement); } catch (e) {} }
+        recompute();
+      })();
+    })();
+  </script>
+  <!-- === /TRACK A · BRAND ELEVATION ============================== -->
 
 </body>
 
